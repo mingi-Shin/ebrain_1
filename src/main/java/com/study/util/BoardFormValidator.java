@@ -28,7 +28,7 @@ public class BoardFormValidator {
         private boolean validateBoardForm(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
             String category = req.getParameter("category"); //FREEBOARD
             String username = req.getParameter("username");
-            String password = req.getParameter("password");
+            String password = req.getParameter("password");z
             String title = req.getParameter("title");
             String content = req.getParameter("content");
 
