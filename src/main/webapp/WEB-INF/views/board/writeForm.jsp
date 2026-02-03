@@ -117,7 +117,8 @@
                 return false;
             }
 
-            //6.파일첨부
+            //6.첨부파일
+
 
 
 
@@ -196,7 +197,7 @@
                 <tr>
                     <th>카테고리</th>
                     <td>
-                        <select id="select-category" >
+                        <select id="select-category" name="category">
                             <option value="">전체 카테고리</option>
                             <option value="NOTICE">공지사항</option>
                             <option value="EVENT">이벤트</option>
@@ -207,7 +208,7 @@
                 <tr>
                     <th>작성자</th>
                     <td>
-                        <input type="text" id="username" maxlength="4" required>
+                        <input type="text" id="username" maxlength="4" name="username" required>
                     </td>
                 </tr>
                 <tr>
@@ -226,14 +227,14 @@
                 <tr>
                     <th>제목</th>
                     <td>
-                        <input type="text" id="title" maxlength="99" required>
+                        <input type="text" id="title" maxlength="99" name="title" required>
                     </td>
 
                 </tr>
                 <tr>
                     <th>내용</th>
                     <td>
-                        <textarea class="text-area" id="text-area" maxlength="1999"></textarea>
+                        <textarea class="text-area" id="text-area"  name="content" maxlength="1999"></textarea>
                     </td>
 
                 </tr>
