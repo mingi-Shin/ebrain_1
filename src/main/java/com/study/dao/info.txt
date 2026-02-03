@@ -1,0 +1,7 @@
+dao = JDBC 접근
+
+Bean을 DAO에서 쓰는 방식?
+Attachment a = new Attachment();
+a.setBoardSeq(rs.getInt("board_seq"));
+a.setOriginName(rs.getString("origin_name"));
+a.setStoredName(rs.getString("stored_name"));
