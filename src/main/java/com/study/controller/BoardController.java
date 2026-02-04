@@ -1,5 +1,7 @@
 package com.study.controller;
 
+import com.study.Service.AllBoardService;
+import com.study.model.Attachment;
 import com.study.model.Board;
 import com.study.util.BoardFormValidator;
 import com.study.util.UploadFileUtil;
@@ -12,10 +14,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -84,14 +88,14 @@ public class BoardController extends HttpServlet {
                 return;
             }
 
-            //3. 실제 값이 있는 첨부파일만 골라내기
+            //3. 실제 값이 있는 file 첨부파일만 골라내기
             Collection<Part> files = req.getParts().stream()
                     .filter(part -> "file".equals(part.getName()))
                     .filter(part -> part.getSize() > 0)
                     .filter(part -> part.getSubmittedFileName() != null)
                     .collect(Collectors.toCollection(ArrayList::new));
 
-            // 4. 실제 값이있는 첨부파일들 검증하기
+            // 4. 실제 값이 있는 첨부파일들 검증하기
             ValidationResult fileResult = BoardFormValidator.validateFileAttachment(files);
             if(!fileResult.isValid()){
 
@@ -103,9 +107,10 @@ public class BoardController extends HttpServlet {
 
             // ------------------------ 검증 모두 통과 --------------------------
 
-            //1. 첨부파일을 하드에 저장
+            //1. 첨부파일을 하드에 저장 및 객체 리스트화
+            List<Attachment> attList = null;
             try {
-                UploadFileUtil.saveFile(files);
+                attList = UploadFileUtil.saveFile(files);
             } catch (UncheckedIOException e){
                 log.severe(e.getMessage());
 
@@ -115,18 +120,32 @@ public class BoardController extends HttpServlet {
             }
 
             log.info("--------------- 첨부파일 하드에 저장 성공 -----------------");
-            //2-1. Board 테이블 INSERT & Attachment 테이블 INSERT
 
-
-
-            //2-2. 테이블 작업 롤백시(=실패) 하드 저장된 파일도 삭제
-
-
-            log.info("/new 끝 ~~~");
-
+            //2. Board 테이블 INSERT & Attachment 테이블 INSERT -> Transactional 처리
+            AllBoardService baService = new AllBoardService();
+            try{
+                baService.createBoardAttachment(boardDto, attList);
+            } catch (RuntimeException e){
+                //테이블 작업 실패 -> 하드에 저장된 첨부파일 삭제
+                //log.info("----------- DB작업 실패, rollback 처리. 저장된 사진 삭제를 시도합니다. -----------");
+                for(Attachment att : attList){
+                    // 절대 경로 조합
+                    String fullPath = UploadFileUtil.MAC_SAVE_PATH
+                            + File.separator + att.getFilePath()
+                            + File.separator + att.getStoredName();
+                    File file = new File(fullPath);
+                    if (file.exists()) {
+                        boolean deleted = file.delete();
+                        log.info(att.getStoredName() + " 삭제 " + deleted);
+                    } else {
+                        log.warning("삭제할 파일 없음: " + fullPath);
+                    }
+                }
+            }
 
             //------------ 최종 --------------
             //다른 페이지로 리다이렉트
+            res.sendRedirect("/board/list");
 
         }
 

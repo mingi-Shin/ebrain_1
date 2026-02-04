@@ -87,10 +87,6 @@
 
 <main>
     <h1>자유 게시판 - 목록</h1>
-    <%
-        String text = request.getAttribute("test").toString();
-    %>
-    <%=text%>
 
     <!-- 검색/등록 컨테이너 -->
     <section class="search-section">

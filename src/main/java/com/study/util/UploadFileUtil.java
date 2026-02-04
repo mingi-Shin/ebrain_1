@@ -18,12 +18,16 @@ public class UploadFileUtil {
     private static final Logger log = Logger.getLogger(UploadFileUtil.class.getName());
 
     //저장 위치
-    private static final String MAC_SAVE_PATH = "/Users/smk/IT_DATAS/ebrain_temp";
+    public static final String MAC_SAVE_PATH = "/Users/smk/IT_DATAS/ebrain_temp";
     private static final String WIN_SAVE_PATH = "";
-
 
     //파일 저장 메서드
     public static List<Attachment> saveFile(Collection<Part> files){
+
+        //첨부파일 없음, 파일저장 로직 불필요
+        if(files.isEmpty()){
+            return Collections.emptyList();
+        }
 
         // 기본 저장경로 생성
         // 왜? 기본과 서브를 따로 ?
@@ -39,10 +43,10 @@ public class UploadFileUtil {
         for(Part file : files){
             Attachment att = new Attachment();
 
-            //물리저장 명 설정 (ex. randomUUID.jpg)
+            //물리저장용 파일이름 설정 (ex. randomUUID.jpg)
             String ext = file.getSubmittedFileName().substring(file.getSubmittedFileName().lastIndexOf("."));
             String uuidName = UUID.randomUUID().toString().replace("-","") + ext;
-            log.info("uuidName : " + uuidName);
+            //log.info("uuidName : " + uuidName);
 
             att.setOriginName(file.getSubmittedFileName());
             att.setStoredName(uuidName);
@@ -60,7 +64,8 @@ public class UploadFileUtil {
             String realPath = rootDir + File.separator + subFilePath;
             String filePath = realPath + File.separator + uuidName;
 
-            try (InputStream fis = file.getInputStream(); OutputStream fos = new FileOutputStream(filePath);)
+            try (InputStream fis = file.getInputStream();
+                 OutputStream fos = new FileOutputStream(filePath); )
             {
                 byte[] buf =  new byte[1024];
                 int len = 0;

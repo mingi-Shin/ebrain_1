@@ -58,12 +58,17 @@ public class BoardFormValidator {
     // 첨부파일 검증
     public static final ValidationResult validateFileAttachment(Collection<Part> parts) {
 
+        //첨부파일이 없을 때.
+        if(parts.isEmpty()){
+            return ValidationResult.ok();
+        }
+
         for(Part p : parts){
 
             log.info("p : " + p.getSubmittedFileName() + " / " + p.getContentType() + " / " + p.getSize());
 
             //1. 파일 이미지 여부 검증 (application/octet-stream)
-            if(p.getContentType() == null || !p.getContentType().startsWith("image/")){
+            if(!p.getContentType().startsWith("image/")){
                 return ValidationResult.fail("이미지 파일만 업로드가 가능합니다.");
             }
             //2. 파일 용량 검증 (10MB 이하)
