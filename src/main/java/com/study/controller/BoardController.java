@@ -2,6 +2,7 @@ package com.study.controller;
 
 import com.study.model.Board;
 import com.study.util.BoardFormValidator;
+import com.study.util.UploadFileUtil;
 import com.study.util.ValidationResult;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -12,8 +13,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -38,7 +40,6 @@ public class BoardController extends HttpServlet {
 
         if("/list".equals(reqPathInfo)){
             log.info("/baord/list doGet 요청 완료");
-            req.setAttribute("test", "신민기천재야");
             req.getRequestDispatcher("/WEB-INF/views/board/list.jsp").forward(req, res);
         }
 
@@ -83,12 +84,15 @@ public class BoardController extends HttpServlet {
                 return;
             }
 
-            //3. 첨푸파일 검증
-            List<Part> files = req.getParts().stream()
+            //3. 실제 값이 있는 첨부파일만 골라내기
+            Collection<Part> files = req.getParts().stream()
                     .filter(part -> "file".equals(part.getName()))
-                    .toList();
+                    .filter(part -> part.getSize() > 0)
+                    .filter(part -> part.getSubmittedFileName() != null)
+                    .collect(Collectors.toCollection(ArrayList::new));
 
-            ValidationResult fileResult = BoardFormValidator.vaildateFileAttachment(files);
+            // 4. 실제 값이있는 첨부파일들 검증하기
+            ValidationResult fileResult = BoardFormValidator.validateFileAttachment(files);
             if(!fileResult.isValid()){
 
                 req.setAttribute("restored", boardDto);
@@ -97,14 +101,25 @@ public class BoardController extends HttpServlet {
                 return;
             }
 
-            // ------------ 검증 모두 통과 ------------------
-            //첨부파일을 임시저장 위치에 저장
+            // ------------------------ 검증 모두 통과 --------------------------
+
+            //1. 첨부파일을 하드에 저장
+            try {
+                UploadFileUtil.saveFile(files);
+            } catch (UncheckedIOException e){
+                log.severe(e.getMessage());
+
+                req.setAttribute("restored", boardDto);
+                req.setAttribute("errorMessage", "파일 저장 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+                req.getRequestDispatcher("/WEB-INF/views/board/writeForm.jsp").forward(req, res);
+            }
+
+            log.info("--------------- 첨부파일 하드에 저장 성공 -----------------");
+            //2-1. Board 테이블 INSERT & Attachment 테이블 INSERT
 
 
-            //Board 테이블 INSERT & Attachment 테이블 INSERT
 
-
-            //테이블 작업 롤백시(=실패) 드라이브 저장된 파일도 삭제
+            //2-2. 테이블 작업 롤백시(=실패) 하드 저장된 파일도 삭제
 
 
             log.info("/new 끝 ~~~");

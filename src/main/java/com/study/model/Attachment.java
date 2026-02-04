@@ -9,6 +9,7 @@ public class Attachment {
     private String storedName;
     private String filePath;
     private Long fileSize;
+    private String fileExt;
     private String fileType;
     private Timestamp createdAt;
     private Timestamp deletedAt;
@@ -55,12 +56,20 @@ public class Attachment {
         this.filePath = filePath;
     }
 
-    public long getFileSize() {
+    public Long getFileSize() {
         return fileSize;
     }
 
-    public void setFileSize(long fileSize) {
+    public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public String getFileExt() {
+        return fileExt;
+    }
+
+    public void setFileExt(String fileExt) {
+        this.fileExt = fileExt;
     }
 
     public String getFileType() {
@@ -86,8 +95,5 @@ public class Attachment {
     public void setDeletedAt(Timestamp deletedAt) {
         this.deletedAt = deletedAt;
     }
-
-
-
 }
 

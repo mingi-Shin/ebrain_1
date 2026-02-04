@@ -10,7 +10,7 @@
 <h1><%= "Hello World!" %>
 </h1>
 <br/>
-<a href=${pageContext.request.contextPath}/board/list">게시판 둘러보기</a>
+<a href="${pageContext.request.contextPath}/board/list">게시판 둘러보기</a>
 <hr>
 
 <%

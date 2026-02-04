@@ -33,6 +33,7 @@
             //validateFile();
 
             //취소 버튼 누를시 전페이지 이동
+//  ------------      단순히 뒤로가기하면 post실패시 실패자료 올라갔던 페이지로 돌아가게됨. 이러면 의도와 어긋남
             document.getElementById('cancel-button').addEventListener('click', ()=>{
                 const isCanceled = confirm('게시물 작성을 취소하시겠습니까?');
                 if(isCanceled){

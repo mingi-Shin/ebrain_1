@@ -1,4 +1,5 @@
-package com.study.model;
+package com.study.dao;
 
 public class AttachmentDAO {
+
 }

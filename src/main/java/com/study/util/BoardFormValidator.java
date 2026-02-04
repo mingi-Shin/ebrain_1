@@ -1,21 +1,15 @@
 package com.study.util;
 
 import com.study.model.Board;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 // 게시물 작성 폼 검증 클래스
 public class BoardFormValidator {
+
+    private static final Logger log = Logger.getLogger(BoardFormValidator.class.getName());
 
     //폼 타입 검증
     public static final ValidationResult validateBoardFormType(String formType){
@@ -62,11 +56,13 @@ public class BoardFormValidator {
     }
 
     // 첨부파일 검증
-    public static final ValidationResult vaildateFileAttachment (List<Part> parts) {
+    public static final ValidationResult validateFileAttachment(Collection<Part> parts) {
 
         for(Part p : parts){
 
-            //1. 파일 이미지 여부 검증
+            log.info("p : " + p.getSubmittedFileName() + " / " + p.getContentType() + " / " + p.getSize());
+
+            //1. 파일 이미지 여부 검증 (application/octet-stream)
             if(p.getContentType() == null || !p.getContentType().startsWith("image/")){
                 return ValidationResult.fail("이미지 파일만 업로드가 가능합니다.");
             }

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.logging.Logger;
 
 //테스트용
@@ -20,8 +21,10 @@ public class CodeTestController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        log.info(System.getProperty("os.name")); //Windows 10
+        //log.info(System.getProperty("os.name")); //Windows 10
 
+        LocalDateTime date = LocalDateTime.now();
+        log.info("LocalDateTime.now() : " + date);
 
     }
 
