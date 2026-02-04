@@ -1,10 +1,12 @@
 package com.study.model;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.sql.Timestamp;
 
 public class Board {
-    private int boardSeq;
-    private int categorySeq;
+    private Long boardSeq;
+    private Long categorySeq;
     private String username;
     private String password;
     private String title;
@@ -16,19 +18,19 @@ public class Board {
 
     public Board(){}
 
-    public int getBoardSeq() {
+    public Long getBoardSeq() {
         return boardSeq;
     }
 
-    public void setBoardSeq(int boardSeq) {
+    public void setBoardSeq(Long boardSeq) {
         this.boardSeq = boardSeq;
     }
 
-    public int getCategorySeq() {
+    public Long getCategorySeq() {
         return categorySeq;
     }
 
-    public void setCategorySeq(int categorySeq) {
+    public void setCategorySeq(Long categorySeq) {
         this.categorySeq = categorySeq;
     }
 
@@ -95,4 +97,16 @@ public class Board {
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public static final Board from(HttpServletRequest req){
+        Board boardDto = new Board();
+        boardDto.setCategorySeq( Long.parseLong(req.getParameter("category")));
+        boardDto.setUsername(req.getParameter("username"));
+        boardDto.setPassword(req.getParameter("password"));
+        boardDto.setTitle(req.getParameter("title"));
+        boardDto.setContent(req.getParameter("content"));
+
+        return boardDto;
+    }
+
 }

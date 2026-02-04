@@ -1,17 +1,17 @@
 package com.study.model;
 
 public class Category {
-    private int categorySeq;
+    private Long categorySeq;
     private String categoryName;
     private String categoryDescribe;
 
     public Category(){};
 
-    public int getCategorySeq() {
+    public Long getCategorySeq() {
         return categorySeq;
     }
 
-    public void setCategorySeq(int categorySeq) {
+    public void setCategorySeq(Long categorySeq) {
         this.categorySeq = categorySeq;
     }
 

@@ -3,8 +3,8 @@ package com.study.model;
 import java.sql.Timestamp;
 
 public class BoardComment {
-    private int commentSeq;
-    private int boardSeq;
+    private Long commentSeq;
+    private Long boardSeq;
     private String writer;
     private String password;
     private String content;
@@ -14,19 +14,19 @@ public class BoardComment {
 
     public BoardComment(){};
 
-    public int getCommentSeq() {
+    public Long getCommentSeq() {
         return commentSeq;
     }
 
-    public void setCommentSeq(int commentSeq) {
+    public void setCommentSeq(Long commentSeq) {
         this.commentSeq = commentSeq;
     }
 
-    public int getBoardSeq() {
+    public Long getBoardSeq() {
         return boardSeq;
     }
 
-    public void setBoardSeq(int boardSeq) {
+    public void setBoardSeq(Long boardSeq) {
         this.boardSeq = boardSeq;
     }
 

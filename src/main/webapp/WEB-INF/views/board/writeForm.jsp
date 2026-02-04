@@ -12,18 +12,27 @@
 
     <script type="application/javascript">
         document.addEventListener('DOMContentLoaded', () => {
-           console.log("게시물 쓰기 페이지");
 
-           document.getElementById('submit-button').addEventListener('click', (e)=>{
-               e.preventDefault();
+            //서버로부터 에러 메시지 수신
+            showErrorMessage();
 
-               const isValidated = validateBoardForm();
-               if(isValidated){
-                   const form = document.forms['frmName'];
-                   form.submit();
-               }
+            //검증 통과시 submit
+            document.getElementById('submit-button').addEventListener('click', (e)=>{
+                e.preventDefault();
+
+                //사용자 입력값 검증 함수 호출
+                //const isValidated = validateBoardForm();
+                //if(isValidated){
+                if(true){
+                    const form = document.getElementById("board-form");
+                    form.submit();
+                }
             })
 
+            //첨부파일 값 검증
+            //validateFile();
+
+            //취소 버튼 누를시 전페이지 이동
             document.getElementById('cancel-button').addEventListener('click', ()=>{
                 const isCanceled = confirm('게시물 작성을 취소하시겠습니까?');
                 if(isCanceled){
@@ -31,27 +40,26 @@
                 }
             })
 
+            //파일찾기 input을 커스텀 버튼과 input창으로 대체
             document.querySelectorAll('.search-file-button').forEach((e)=>{
-               e.addEventListener('click', ()=>{
-                   let number = e.dataset.fileId;
-                   console.log(number);
+                e.addEventListener('click', ()=>{
+                    let number = e.dataset.fileId;
 
-                   const fileInput = document.getElementById("file-input-" + number);
-                   fileInput.click();
-                   fileInput.addEventListener('change', () => {
-                       console.log(fileInput.value);
-                       const fileText = document.getElementById('file-text-' + number);
-                       fileText.value = fileInput.value;
-                   })
+                    const fileInput = document.getElementById("file-input-" + number);
+                    fileInput.click();
+                    fileInput.addEventListener('change', () => {
+                        const fileText = document.getElementById('file-text-' + number);
+                        fileText.value = fileInput.value;
+                    })
 
-               });
+                });
             });
 
 
 
-        });
+        }); //DOMContentLoaded End
 
-        //사용자 입려값 js검증
+        //사용자 입력값 js검증
         function validateBoardForm(){
 
             //1.카테고리
@@ -100,7 +108,7 @@
             //4.제목
             const title = document.getElementById('title');
             const titleValue = title.value.trim();
-            if(titleValue.length < 4 || titleValue.length > 99){
+            if(titleValue.length < 3 || titleValue.length > 99){
                 alert("제목은 3자리 이상, 100자리 미만으로 입력해주세요.");
                 titleValue.slice(0,100);
                 title.focus();
@@ -117,13 +125,51 @@
                 return false;
             }
 
-            //6.첨부파일
-
-
-
-
-
             return true;
+        }
+
+
+        //6.첨부파일
+        function validateFile(){
+            document.querySelectorAll('.file-input').forEach((input)=>{
+                input.addEventListener("change", (e)=>{
+                    const fileInput = e.target;
+
+                    const file = fileInput.files?.[0]; // ?. -> 앞의값이 null, undefined면 undefined 반환
+                    //console.log(file);
+
+                    if(!file){
+                        return;
+                    }
+
+                    //이미지 파일 여부 확인
+                    if(!file.type.startsWith("image/")){
+                        alert("이미지 파일만 등록 가능합니다.");
+                        input.value = "";
+                        return;
+                    }
+
+                    //파일 용량 확인
+                    const maxSize = 10 * 1024 * 1024;
+                    if(file.size > maxSize){
+                        alert("파일 용량은 10MB 이하만 가능합니다.");
+                        input.value = "";
+                        return;
+                    }
+
+                    console.log("image OK : ", file.name, file.type, file.size);
+
+                });
+            });
+        }
+
+        //서버의 에러메시지 수신
+        function showErrorMessage(){
+            const errorMessage = document.getElementById("error-message").value;
+            if(errorMessage){
+                alert(errorMessage);
+                return false;
+            }
         }
 
     </script>
@@ -192,23 +238,23 @@
     </section>
 
     <section class="form-section">
-        <form name="frmName" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/board/new">
+        <form id="board-form" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/board/new">
             <table>
                 <tr>
                     <th>카테고리</th>
                     <td>
                         <select id="select-category" name="category">
-                            <option value="">전체 카테고리</option>
-                            <option value="NOTICE">공지사항</option>
-                            <option value="EVENT">이벤트</option>
-                            <option value="FREEBOARD">자유게시판</option>
+                            <option value="0" ${restored.categorySeq == 0 ? 'selected' : ''}>전체 카테고리</option>
+                            <option value="1" ${restored.categorySeq == 1 ? 'selected' : ''}>공지사항</option>
+                            <option value="2" ${restored.categorySeq == 2 ? 'selected' : ''}>이벤트</option>
+                            <option value="3" ${restored.categorySeq == 3 ? 'selected' : ''}>자유게시판</option>
                         </select>
                     </td>
                 </tr>
                 <tr>
                     <th>작성자</th>
                     <td>
-                        <input type="text" id="username" maxlength="4" name="username" required>
+                        <input type="text" id="username" maxlength="4" name="username" value="${restored.username}" required>
                     </td>
                 </tr>
                 <tr>
@@ -227,38 +273,36 @@
                 <tr>
                     <th>제목</th>
                     <td>
-                        <input type="text" id="title" maxlength="99" name="title" required>
+                        <input type="text" id="title" maxlength="99" name="title" value="${restored.title}" required>
                     </td>
-
                 </tr>
                 <tr>
                     <th>내용</th>
                     <td>
-                        <textarea class="text-area" id="text-area"  name="content" maxlength="1999"></textarea>
+                        <textarea class="text-area" id="text-area" name="content" maxlength="1999">${restored.content}</textarea>
                     </td>
-
                 </tr>
                 <tr>
                     <th rowspan="3">파일첨부</th>
                     <td>
-                        <input type="file" id="file-input-1" hidden="hidden" name="file">
-                        <input type="text" id="file-text-1">
+                        <input type="file" id="file-input-1" class="file-input" hidden="hidden" name="file" accept="image/*">
+                        <input type="text" id="file-text-1" readonly>
                         <button type="button" data-file-id="1" class="search-file-button">파일 찾기</button>
                     </td>
 
                 </tr>
                 <tr>
                     <td>
-                        <input type="file" id="file-input-2" hidden="hidden" name="file">
-                        <input type="text" id="file-text-2">
+                        <input type="file" id="file-input-2" class="file-input" hidden="hidden" name="file" accept="image/*">
+                        <input type="text" id="file-text-2" readonly>
                         <button type="button" data-file-id="2" class="search-file-button">파일 찾기</button>
                     </td>
 
                 </tr>
                 <tr>
                     <td>
-                        <input type="file" id="file-input-3" hidden="hidden" name="file">
-                        <input type="text" id="file-text-3">
+                        <input type="file" id="file-input-3" class="file-input" hidden="hidden" name="file" accept="image/*">
+                        <input type="text" id="file-text-3" readonly>
                         <button type="button" data-file-id="3" class="search-file-button">파일 찾기</button>
                     </td>
                 </tr>
@@ -269,6 +313,10 @@
                 <button id="submit-button">저장</button>
             </div>
         </form>
+
+        <div>
+            <input type="text" value="${errorMessage}" id="error-message" hidden="hidden">
+        </div>
     </section>
 
 </main>

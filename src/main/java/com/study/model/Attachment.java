@@ -3,31 +3,31 @@ package com.study.model;
 import java.sql.Timestamp;
 
 public class Attachment {
-    private int attachmentSeq;
-    private int boardSeq;
+    private Long attachmentSeq;
+    private Long boardSeq;
     private String originName;
     private String storedName;
     private String filePath;
-    private long fileSize;
+    private Long fileSize;
     private String fileType;
     private Timestamp createdAt;
     private Timestamp deletedAt;
 
     public Attachment(){};
 
-    public int getAttachmentSeq() {
+    public Long getAttachmentSeq() {
         return attachmentSeq;
     }
 
-    public void setAttachmentSeq(int attachmentSeq) {
+    public void setAttachmentSeq(Long attachmentSeq) {
         this.attachmentSeq = attachmentSeq;
     }
 
-    public int getBoardSeq() {
+    public Long getBoardSeq() {
         return boardSeq;
     }
 
-    public void setBoardSeq(int boardSeq) {
+    public void setBoardSeq(Long boardSeq) {
         this.boardSeq = boardSeq;
     }
 
