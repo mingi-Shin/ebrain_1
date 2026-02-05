@@ -28,6 +28,9 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
     implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.28'
 
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:2.0.0'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:2.0.0'
+
 }
 
 test {

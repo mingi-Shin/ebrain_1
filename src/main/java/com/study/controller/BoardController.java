@@ -1,6 +1,7 @@
 package com.study.controller;
 
 import com.study.Service.AllBoardService;
+import com.study.dao.BoardDAO;
 import com.study.model.Attachment;
 import com.study.model.Board;
 import com.study.util.BoardFormValidator;
@@ -17,6 +18,8 @@ import jakarta.servlet.http.Part;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,18 +40,74 @@ public class BoardController extends HttpServlet {
         String reqPathInfo = req.getPathInfo();
         log.info("reqPathInfo : " + reqPathInfo);
 
-        //List<Board> list = boardDao.findAll();
-        //request.setAttribute("boards", list);
-        //request.getRequestDispatcher("/WEB-INF/views/board/boardList.jsp")
-        //        .forward(request, response);
-
+        //게시물 리스트 페이지 호출
         if("/list".equals(reqPathInfo)){
-            log.info("/baord/list doGet 요청 완료");
+
+            //파라미터값 수신
+            String categoryParam = req.getParameter("categorySeq");
+            String searchWordParam = req.getParameter("searchWord");
+            String startDateParam = req.getParameter("startDate");
+            String endDateParam = req.getParameter("endDate");
+            String pageParam = req.getParameter("page");
+
+            log.info("/list 초기 수신값 : " + categoryParam + " / " + searchWordParam + " / " + startDateParam + " / " + endDateParam + " / " + pageParam ) ;
+
+            //처음 접속시와 null 파라미터를 위해 초기값 설정 및 메서드용으로써 자료형 변환.
+            int categorySeq = (categoryParam == null || categoryParam.isBlank()) ? 0 : Integer.parseInt(categoryParam.trim());
+
+            String searchWord = (searchWordParam == null || searchWordParam.isBlank()) ? "" : searchWordParam.trim();
+
+            //날짜 초기값 : 1년전 ~ 현재
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            String startDate = (startDateParam == null || startDateParam.isBlank())
+                    ? LocalDate.now().minusYears(1).format(dtf)
+                    : startDateParam.trim();
+
+            String endDate = (endDateParam == null || endDateParam.isBlank())
+                    ? LocalDate.now().format(dtf)
+                    : endDateParam.trim();
+
+            int page = (pageParam == null || pageParam.isBlank()) ? 1 : Integer.parseInt(pageParam.trim());
+
+            //게시물 리스트 불러오기
+            AllBoardService allBoardService = new AllBoardService();
+            //List<Board> boardList = allBoardService.selectBoardListAttach(categorySeq, searchWord, startDate, endDate, page);
+
+            List<Board> testList = null;
+
+            // 게시물 조회 갯수에 근거하여 페이지 설정하기
+            int totalPage = 8;
+            //int totalPage = 1;
+            if (testList != null && !testList.isEmpty()) {
+                totalPage = (int) Math.ceil(testList.size() / 10.0);
+            }
+            int endPage = totalPage;
+            int startPage = 1;
+
+            log.info("/list 수정후 값 : "
+                    + categorySeq + " / " + searchWord + " / " + startDate + " / " + endDate
+                    + " / " + page + " / " + totalPage + " / " + endPage + " / " + startPage) ;
+
+
+            //게시물 전송
+            req.setAttribute("boardList", testList);
+
+            //검색 조건 유지 값 전송
+            req.setAttribute("categorySeq", categorySeq);
+            req.setAttribute("searchWord", searchWord);
+            req.setAttribute("startDate", startDate);
+            req.setAttribute("endDate", endDate);
+            req.setAttribute("page", page);
+            req.setAttribute("totalPage", totalPage);
+            req.setAttribute("startPage", startPage);
+            req.setAttribute("endPage", endPage);
+
             req.getRequestDispatcher("/WEB-INF/views/board/list.jsp").forward(req, res);
         }
 
+        //게시물 작성 페이지 호출
         if("/new".equals(reqPathInfo)){
-            log.info("/baord/new doGet 요청 완료");
             req.getRequestDispatcher("/WEB-INF/views/board/writeForm.jsp").forward(req, res);
         }
 

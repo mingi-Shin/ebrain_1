@@ -246,9 +246,9 @@
                     <td>
                         <select id="select-category" name="category">
                             <option value="0" ${restored.categorySeq == 0 ? 'selected' : ''}>전체 카테고리</option>
-                            <option value="1" ${restored.categorySeq == 1 ? 'selected' : ''}>공지사항</option>
-                            <option value="2" ${restored.categorySeq == 2 ? 'selected' : ''}>이벤트</option>
-                            <option value="3" ${restored.categorySeq == 3 ? 'selected' : ''}>자유게시판</option>
+                            <option value="1" ${restored.categorySeq == 1 ? 'selected' : ''}>JAVA</option>
+                            <option value="2" ${restored.categorySeq == 2 ? 'selected' : ''}>Javascript</option>
+                            <option value="3" ${restored.categorySeq == 3 ? 'selected' : ''}>Database</option>
                         </select>
                     </td>
                 </tr>

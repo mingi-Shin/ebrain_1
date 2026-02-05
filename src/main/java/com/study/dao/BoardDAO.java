@@ -4,6 +4,9 @@ import com.study.connection.ConnectionTest;
 import com.study.model.Board;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -80,7 +83,7 @@ public class BoardDAO {
     }
 
     /**
-     * 게시물 조회 메서드 (동시성 제어 비관적 잠금처리)
+     * 게시물 상세 조회 메서드 (동시성 제어 비관적 잠금처리 -> 댓글작성때 호출 필요)
      * @param boardSeq
      * @return
      */
@@ -92,12 +95,50 @@ public class BoardDAO {
     }
 
     /**
-     * 게시물 전체 조회 메서드
+     * 게시물 리스트 조회 메서드 (조건은 동적으로)
      * @return
      */
-    public List<Board> boardList(){
+    public List<Board> selectBoardList(Long categorySeq, String searchWord, String startDate, String endDate,
+                                       int limit, int offset) throws Exception {
 
-        return null;
+        List<Board> list = new ArrayList<>();
+
+        String boardListsql =
+                "SELECT category_seq, title, username, hit, created_at, updated_at " +
+                "FROM board " +
+                "WHERE category_seq = ? " +
+                "AND (title LIKE ? OR username LIKE ? OR content LIKE ?) " +
+                "AND created_at >= ? AND created_at <= ? " +
+                "ORDER BY created_at DESC " +
+                "LIMIT ? OFFSET ? ";
+
+        try(Connection conn = ConnectionTest.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(boardListsql);)
+        {
+            String keyword = "%" + searchWord + "%";
+            pstmt.setLong(1, categorySeq);
+            pstmt.setString(2, keyword);
+            pstmt.setString(3, keyword);
+            pstmt.setString(4, keyword);
+            pstmt.setString(5, startDate);
+            pstmt.setString(6, endDate);
+            pstmt.setInt(7, limit);
+            pstmt.setInt(8, offset);
+
+            try(ResultSet rs = pstmt.executeQuery();){
+                while(rs.next()){
+                    Board board = new Board();
+                    board.setCategorySeq(rs.getLong("category_seq"));
+                    board.setTitle(rs.getString("title"));
+                    board.setUsername(rs.getString("username"));
+                    board.setHit(rs.getInt("hit"));
+                    board.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                }
+            }
+
+        }
+
+        return list;
     }
 
 }

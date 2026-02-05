@@ -9,7 +9,9 @@ import com.study.model.BoardComment;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.logging.Logger;
 
 // BoardInsert와 AttachInsert 작업을 하나로 묶기위한 트랜잭셔널 클래스
@@ -67,6 +69,28 @@ public class AllBoardService {
 
 
     }
+
+    public List<Board> selectBoardListAttach(int categorySeq, String searchWord, String startDate, String endDate, int page){
+
+        int size = 10;
+        int limit = size;
+        int offset = (page - 1) * size;
+
+        List<Board> boardList = new ArrayList<>();
+
+        // page를 줘서 게시물 10개 받아오기 쿼리
+        // 첨부파일 표시를 위해, 받아온 게시물들 boardSeq로 board객체에 hasAttachment 변수를 true로 변환하여 boardList에 add.
+        // page를 제외한 조건 (매개변수)을 줘서 총 게시물 개수 받아오기 쿼리
+
+        BoardDAO bDao = BoardDAO.getInstance();
+
+        AttachmentDAO aDao = AttachmentDAO.getInstance();
+
+
+
+        return boardList;
+    }
+
 
 
 
