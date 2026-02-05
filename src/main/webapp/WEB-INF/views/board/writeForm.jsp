@@ -21,9 +21,17 @@
                 e.preventDefault();
 
                 //사용자 입력값 검증 함수 호출
-                //const isValidated = validateBoardForm();
-                //if(isValidated){
-                if(true){
+                const isValidated = validateBoardForm();
+                if(isValidated){
+
+                    //등록 전에 url 주소 서버에 전송
+                    let beforeUrl = sessionStorage.getItem("beforeUrl");
+                    if(beforeUrl){
+                        document.getElementById('before-url').value = beforeUrl;
+                    } else {
+                        document.getElementById('before-url').value = "/";
+                    }
+
                     const form = document.getElementById("board-form");
                     form.submit();
                 }
@@ -33,11 +41,11 @@
             //validateFile();
 
             //취소 버튼 누를시 전페이지 이동
-//  ------------      단순히 뒤로가기하면 post실패시 실패자료 올라갔던 페이지로 돌아가게됨. 이러면 의도와 어긋남
             document.getElementById('cancel-button').addEventListener('click', ()=>{
                 const isCanceled = confirm('게시물 작성을 취소하시겠습니까?');
                 if(isCanceled){
-                    history.back();
+                    let url = sessionStorage.getItem("beforeUrl");
+                    location.href=url;
                 }
             })
 
@@ -240,6 +248,9 @@
 
     <section class="form-section">
         <form id="board-form" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/board/new">
+            <div>
+                <input type="text" value="" id="before-url" name="beforeUrl" hidden="hidden">
+            </div>
             <table>
                 <tr>
                     <th>카테고리</th>
@@ -318,6 +329,7 @@
         <div>
             <input type="text" value="${errorMessage}" id="error-message" hidden="hidden">
         </div>
+
     </section>
 
 </main>

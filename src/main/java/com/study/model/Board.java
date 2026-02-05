@@ -20,6 +20,10 @@ public class Board {
     //해당 게시물 첨부파일 존재여부 : 게시물 리스트 호출에 쓰일 변수
     private boolean hasAttachment;
 
+    // EL표현을 위해 출력용 날짜변수 선언
+    private String createdAtStr;
+    private String updatedAtStr;
+
     public Board(){}
 
     public Long getBoardSeq() {
@@ -110,6 +114,22 @@ public class Board {
         this.hasAttachment = hasAttachment;
     }
 
+    public String getCreatedAtStr() {
+        return createdAtStr;
+    }
+
+    public void setCreatedAtStr(String createdAtStr) {
+        this.createdAtStr = createdAtStr;
+    }
+
+    public String getUpdatedAtStr() {
+        return updatedAtStr;
+    }
+
+    public void setUpdatedAtStr(String updatedAtStr) {
+        this.updatedAtStr = updatedAtStr;
+    }
+
     @Override
     public String toString() {
         return "Board{" +
@@ -124,6 +144,8 @@ public class Board {
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 ", hasAttachment=" + hasAttachment +
+                ", createdAtStr='" + createdAtStr + '\'' +
+                ", updatedAtStr='" + updatedAtStr + '\'' +
                 '}';
     }
 

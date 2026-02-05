@@ -7,10 +7,64 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <html>
 <head>
     <title>EbrainStudy | 게시물 목록</title>
+
+    <script type="application/javascript">
+        document.addEventListener("DOMContentLoaded", ()=>{
+
+            submitSearchForm();
+            saveUrlBeforeMove();
+
+        });
+
+        //검색 전에 날짜 검증하기
+        function submitSearchForm(){
+            const submitBtn = document.getElementById('searchBtn');
+            submitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                //날짜값 검증
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+                let startDate= new Date(startDateInput.value);
+                let endDate = new Date(endDateInput.value);
+                if(startDate > endDate){
+                    alert("시작날짜가 종료일보다 뒤에 있을 수 없습니다.");
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    startDateInput.value = todayStr;
+                    endDateInput.value = todayStr;
+                    return false;
+                }
+
+                const form = document.getElementById('searchForm');
+                form.submit();
+
+            });
+        }
+
+        //페이지 이동 전, 세션스토리지에 url 저장
+        function saveUrlBeforeMove(){
+            const btn = document.getElementById('write-button');
+            if(btn){
+                btn.addEventListener('click', ()=>{
+                    sessionStorage.setItem("beforeUrl", window.location.href);
+                    location.href="/board/new";
+                })
+            }
+
+            document.querySelectorAll('.detail-link').forEach((link)=>{
+                link.addEventListener('click', () => {
+                    sessionStorage.setItem("beforeUrl", window.location.href);
+                })
+            })
+        }
+
+    </script>
 </head>
 <style>
     main {
@@ -84,8 +138,20 @@
     }
 
     .active {
-        color: #007bff;
+        font-size: 16px;
+        color: cornflowerblue;
     }
+
+    table {
+        border: solid 1px black;
+        width: 100%;
+    }
+    table th, td {
+        border: solid 1px black;
+        text-align: center;
+        vertical-align: middle;
+    }
+
 
 
 </style>
@@ -100,9 +166,9 @@
             <div class="search-controls">
                 <div>
                     <label for="startDate">등록일</label>
-                    <input type="date" id="startDate" name="startDate" value="${startDate}">
+                    <input type="date" id="startDate" class="date-select" name="startDate" value="${startDate}">
                     ~
-                    <input type="date" id="endDate" name="endDate" value="${endDate}">
+                    <input type="date" id="endDate" class="date-select" name="endDate" value="${endDate}">
                 </div>
                 <div style="min-width: 50%">
                     <select id="select" name="categorySeq">
@@ -113,7 +179,7 @@
                     </select>
                     <input class="search-input" type="text" placeholder="검색어를 입력해 주세요 (제목+작성자+내용)" name="searchWord"
                         value="${searchWord}">
-                    <button id="searchBtn">검색</button>
+                    <button type="button" id="searchBtn">검색</button>
                 </div>
             </div>
         </form>
@@ -121,9 +187,70 @@
 
     <!-- 게시물 리스트 컨테이너 -->
     <section class="boardList-section">
-
-        <div>${boardList == null ? "게시물이 없습니다." : boardList}</div>
-
+        <div id="list-count-div">
+            총 <span>${listCount}</span>건
+        </div>
+        <table >
+            <thead>
+                <tr>
+                    <th>카테고리</th>
+                    <th>첨</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>조회수</th>
+                    <th>등록 일시</th>
+                    <th>수정 일시</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:if test="${empty boardList}" >
+                    <td colspan="7">등록된 게시물이 없습니다.</td>
+                </c:if>
+                <c:if test="${not empty boardList}">
+                    <c:forEach var="board" items="${boardList}">
+                        <tr>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${board.categorySeq == 1}">JAVA</c:when>
+                                    <c:when test="${board.categorySeq == 2}">Javascript</c:when>
+                                    <c:when test="${board.categorySeq == 3}">Database</c:when>
+                                </c:choose>
+                            </td>
+                            <td>
+                                <c:if test="${board.hasAttachment}">&#128206;</c:if>
+                                <c:if test="${!board.hasAttachment}"> </c:if>
+                            </td>
+                            <td>
+                                <a href="${pageContext.request.contextPath}/board/detail?boardSeq=${board.boardSeq}" class="detail-link">
+                                    <c:choose>
+                                        <c:when test="${board.title != null && fn:length(board.title) > 80}">
+                                            ${fn:substring(board.title, 0, 80)}...
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${board.title}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </a>
+                            </td>
+                            <td>${board.username}</td>
+                            <td>${board.hit}</td>
+                            <!-- fmt는 Date자료형만 가능. El에는 LocalDateTime 안됨. String 쓰면 됨 -->
+                            <td>${board.createdAtStr}</td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${empty board.updatedAtStr }">
+                                        -
+                                    </c:when>
+                                    <c:otherwise>
+                                        ${board.updatedAtStr}
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </c:if>
+            </tbody>
+        </table>
 
     </section>
 
@@ -134,66 +261,36 @@
                 <!-- 맨앞 -->
                 <c:if test="${page > 1}">
                     <li>
-                        <a href="?page=1
-                            &categorySeq=${categorySeq}
-                            &searchWord=${searchWord}
-                            &startDate=${startDate}
-                            &endDate=${endDate}">
-                            &lt;&lt;
-                        </a>
+                        <a href="?page=1&categorySeq=${fn:trim(categorySeq)}&searchWord=${fn:trim(searchWord)}&startDate=${fn:trim(startDate)}&endDate=${fn:trim(endDate)}">&lt;&lt;</a>
                     </li>
                 </c:if>
 
                 <!-- 이전 -->
                 <c:if test="${page > 1}">
                     <li>
-                        <a href="?page=${page - 1}
-                            &categorySeq=${categorySeq}
-                            &searchWord=${searchWord}
-                            &startDate=${startDate}
-                            &endDate=${endDate}">
-                            &lt;
-                        </a>
+                        <a href="?page=${page - 1}&categorySeq=${fn:trim(categorySeq)}&searchWord=${fn:trim(searchWord)}&startDate=${fn:trim(startDate)}&endDate=${fn:trim(endDate)}">&lt;</a>
                     </li>
                 </c:if>
 
                 <!-- 페이지 번호 -->
                 <c:forEach var="pageNo" begin="${startPage}" end="${endPage}">
                     <li>
-                        <a href="?page=${pageNo}
-                            &categorySeq=${categorySeq}
-                            &searchWord=${searchWord}
-                            &startDate=${startDate}
-                            &endDate=${endDate}"
-                           class="${pageNo == page ? 'active' : ''}">
-                                ${pageNo}
-                        </a>
+                        <a href="?page=${pageNo}&categorySeq=${fn:trim(categorySeq)}&searchWord=${fn:trim(searchWord)}&startDate=${fn:trim(startDate)}&endDate=${fn:trim(endDate)}"
+                           class="${pageNo == page ? 'active' : ''}">${pageNo}</a>
                     </li>
                 </c:forEach>
 
                 <!-- 다음 -->
                 <c:if test="${page < totalPage}">
                     <li>
-                        <a href="?page=${page + 1}
-                            &categorySeq=${categorySeq}
-                            &searchWord=${searchWord}
-                            &startDate=${startDate}
-                            &endDate=${endDate}">
-                            &gt;
-                        </a>
+                        <a href="?page=${page + 1}&categorySeq=${fn:trim(categorySeq)}&searchWord=${fn:trim(searchWord)}&startDate=${fn:trim(startDate)}&endDate=${fn:trim(endDate)}">&gt;</a>
                     </li>
                 </c:if>
 
                 <!-- 맨뒤 -->
                 <c:if test="${page < totalPage}">
                     <li>
-                        <a href="?page=${totalPage}
-                            &categorySeq=${categorySeq}
-                            &searchWord=${searchWord}
-                            &startDate=${startDate}
-                            &endDate=${endDate}">
-                            &gt;&gt;
-                        </a>
+                        <a href="?page=${totalPage}&categorySeq=${fn:trim(categorySeq)}&searchWord=${fn:trim(searchWord)}&startDate=${fn:trim(startDate)}&endDate=${fn:trim(endDate)}">&gt;&gt;</a>
                     </li>
                 </c:if>
 
@@ -202,10 +299,12 @@
     </section>
 
 
-
+    <div>
+        <input type="text" value="${errorMessage}" id="error-message" hidden="hidden">
+    </div>
 
     <div class="write-button">
-        <button type="button" onclick="location.href='/board/new'">등록</button>
+        <button type="button" id="write-button">등록</button>
     </div>
 
 </main>

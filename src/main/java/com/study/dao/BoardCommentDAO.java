@@ -1,9 +1,10 @@
 package com.study.dao;
 
+import com.study.connection.ConnectionTest;
 import com.study.model.BoardComment;
 
-import java.sql.Connection;
-import java.sql.Timestamp;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -26,6 +27,8 @@ public class BoardCommentDAO {
      */
     public void insertComment(BoardComment comment, Connection conn){
 
+        //정합성 생각. 게시물이 삭제될경우(논리 삭제) -> "삭제된 게시물에는 댓글을 작성하실수 없습니다" 표시하기위함
+
 
     }
 
@@ -34,8 +37,21 @@ public class BoardCommentDAO {
      * 게시물 댓글 삭제 메서드
      * @param commentSeq
      */
-    public void deleteComment(Long commentSeq){
+    public void deleteComment(Long commentSeq) throws Exception {
 
+        String sql = "UPDATE board_comment SET status = 'DELETED' WHERE comment_seq = ? ";
+
+        try(Connection conn = ConnectionTest.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+        ){
+            pstmt.setLong(1, commentSeq);
+
+            int resultRow = pstmt.executeUpdate();
+
+            if(resultRow == 0){
+                throw new SQLException("댓글 등록 실패");
+            }
+        }
     }
 
     /**
@@ -43,9 +59,33 @@ public class BoardCommentDAO {
      * @param boardSeq
      * @return
      */
-    public List<BoardComment> commentList(Long boardSeq){
+    public List<BoardComment> selectCommentList(Long boardSeq, Connection conn) throws SQLException {
 
-        return null;
+        List<BoardComment> commentList = new ArrayList<>();
+
+        String sql = "SELECT * FROM board_comment WHERE board_seq = ? AND status = 'ACTIVE' ";
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql);){
+
+            pstmt.setLong(1, boardSeq);
+
+            try(ResultSet rs = pstmt.executeQuery();){
+
+                while (rs.next()){
+                    BoardComment comment = new BoardComment();
+                    comment.setCommentSeq(rs.getLong("comment_seq"));
+                    comment.setBoardSeq(rs.getLong("board_seq"));
+                    comment.setWriter(rs.getString("writer"));
+                    comment.setContent(rs.getString("content"));
+                    comment.setPassword(rs.getString("password"));
+                    comment.setCreatedAt(rs.getTimestamp("created_at"));
+                    comment.setStatus(rs.getString("status"));
+
+                    commentList.add(comment);
+                }
+            }
+        }
+        return commentList;
     }
 
 

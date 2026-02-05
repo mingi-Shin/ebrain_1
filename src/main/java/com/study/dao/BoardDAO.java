@@ -77,9 +77,38 @@ public class BoardDAO {
      * 게시물 조회 메서드
      * @param boardSeq
      */
-    public Board selectBoard(Long boardSeq){
+    public Board selectBoard(Long boardSeq, Connection conn) throws SQLException {
 
-        return null;
+        Board board = null;
+        String sql = "SELECT * FROM board WHERE board_seq = ? ";
+
+        try(PreparedStatement pstmt = conn.prepareStatement(sql);
+        ){
+            pstmt.setLong(1, boardSeq);
+
+            try(ResultSet rs = pstmt.executeQuery();){
+                while (rs.next()){
+                    board = new Board();
+                    board.setBoardSeq(rs.getLong("board_seq"));
+                    board.setCategorySeq(rs.getLong("category_seq"));
+                    board.setTitle(rs.getString("title"));
+                    board.setContent(rs.getString("content"));
+                    board.setUsername(rs.getString("username"));
+                    board.setPassword(rs.getString("password"));
+                    board.setHit(rs.getInt("hit"));
+                    board.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    //updatedAt은 NPE 가능성 존재, toLocalDateTime()은 NPE발생시킴
+                    Timestamp updatedAtTs = rs.getTimestamp("updated_at");
+                    if(updatedAtTs != null){
+                        board.setUpdatedAt(updatedAtTs.toLocalDateTime());
+                    } else {
+                        board.setUpdatedAt(null);
+                    }
+                }
+            }
+        }
+
+        return board;
     }
 
     /**
@@ -98,47 +127,96 @@ public class BoardDAO {
      * 게시물 리스트 조회 메서드 (조건은 동적으로)
      * @return
      */
-    public List<Board> selectBoardList(Long categorySeq, String searchWord, String startDate, String endDate,
+    public List<Board> selectBoardList(Long categorySeq, String searchWord, LocalDateTime startDate, LocalDateTime endDate,
                                        int limit, int offset) throws Exception {
 
-        List<Board> list = new ArrayList<>();
+        List<Board> boardListlist = new ArrayList<>();
 
-        String boardListsql =
-                "SELECT category_seq, title, username, hit, created_at, updated_at " +
-                "FROM board " +
-                "WHERE category_seq = ? " +
-                "AND (title LIKE ? OR username LIKE ? OR content LIKE ?) " +
-                "AND created_at >= ? AND created_at <= ? " +
-                "ORDER BY created_at DESC " +
+        String boardListsql = "SELECT \n" +
+                "    b.* ,\n" +
+                "    EXISTS(SELECT 1 FROM attachment a WHERE a.board_seq = b.board_seq AND a.deleted_at IS NULL) AS has_attachment\n" +
+                "FROM board b\n" +
+                "WHERE (? = 0 OR b.category_seq = ? ) \n" +
+                "  AND (b.title LIKE ? OR b.content LIKE ? OR b.username LIKE ?)\n" +
+                "  AND b.created_at BETWEEN ? AND ? \n" +
+                "  AND b.status = 'ACTIVE' \n" +
+                "ORDER BY b.created_at DESC \n" +
                 "LIMIT ? OFFSET ? ";
 
         try(Connection conn = ConnectionTest.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(boardListsql);)
-        {
+            PreparedStatement pstmt = conn.prepareStatement(boardListsql);
+        ){
             String keyword = "%" + searchWord + "%";
-            pstmt.setLong(1, categorySeq);
-            pstmt.setString(2, keyword);
+
+            pstmt.setLong(1, categorySeq); // ? = 0
+            pstmt.setLong(2, categorySeq); // b.category_seq = ?
             pstmt.setString(3, keyword);
             pstmt.setString(4, keyword);
-            pstmt.setString(5, startDate);
-            pstmt.setString(6, endDate);
-            pstmt.setInt(7, limit);
-            pstmt.setInt(8, offset);
+            pstmt.setString(5, keyword);
+            pstmt.setObject(6, startDate);
+            pstmt.setObject(7, endDate);
+            pstmt.setInt(8, limit);
+            pstmt.setInt(9, offset);
 
             try(ResultSet rs = pstmt.executeQuery();){
                 while(rs.next()){
                     Board board = new Board();
+                    board.setBoardSeq(rs.getLong("board_seq"));
                     board.setCategorySeq(rs.getLong("category_seq"));
                     board.setTitle(rs.getString("title"));
                     board.setUsername(rs.getString("username"));
                     board.setHit(rs.getInt("hit"));
                     board.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    //updatedAt은 NPE 가능성 존재, toLocalDateTime()은 NPE발생시킴
+                    Timestamp updatedAtTs = rs.getTimestamp("updated_at");
+                    if(updatedAtTs != null){
+                        board.setUpdatedAt(updatedAtTs.toLocalDateTime());
+                    } else {
+                        board.setUpdatedAt(null);
+                    }
+                    board.setHasAttachment(rs.getBoolean("has_attachment"));
+                    board.setStatus("ACTIVE");
+
+                    boardListlist.add(board);
                 }
             }
 
         }
 
-        return list;
+        return boardListlist;
+    }
+
+    public int selectListCount(Long categorySeq, String searchWord, LocalDateTime startDate, LocalDateTime endDate) throws Exception {
+
+        String countSql = "SELECT COUNT(*) " +
+                "FROM board " +
+                "WHERE ( ? = 0 OR category_seq = ? )" +
+                "  AND (title LIKE ? OR content LIKE ? OR username LIKE ?) " +
+                "  AND created_at BETWEEN ? AND ?" +
+                "  AND status = 'ACTIVE' " ;
+
+        int totalCount = 0;
+
+        try (Connection conn = ConnectionTest.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(countSql);
+        ){
+            String keyword = "%" + searchWord + "%";
+
+            pstmt.setLong(1, categorySeq);
+            pstmt.setLong(2, categorySeq);
+            pstmt.setString(3, keyword);
+            pstmt.setString(4, keyword);
+            pstmt.setString(5, keyword);
+            pstmt.setObject(6, startDate); // LocalDateTime → TIMESTAMP 자동 매핑
+            pstmt.setObject(7, endDate);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    totalCount = rs.getInt(1);
+                }
+            }
+        }
+        return totalCount;
     }
 
 }

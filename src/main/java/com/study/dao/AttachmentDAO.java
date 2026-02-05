@@ -4,7 +4,9 @@ import com.study.model.Attachment;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
@@ -71,16 +73,35 @@ public class AttachmentDAO {
 
     }
 
-    /**
-     * 게시물 조회시, 첨부파일 조회 메서드
-     * @param boardSeq
-     * @return
-     */
-    public List<Attachment> selectAttachment(Long boardSeq){
+    public List<Attachment> selectAttList(Long boardSeq, Connection conn) throws SQLException {
+        List<Attachment> attList = new ArrayList<>();
 
+        String sql = "SELECT * FROM attachment WHERE board_seq = ? AND deleted_at IS NULL ";
 
-        return null;
+        try(PreparedStatement pstmt = conn.prepareStatement(sql);){
+
+            pstmt.setLong(1, boardSeq);
+
+            try(ResultSet rs = pstmt.executeQuery();){
+                while (rs.next()){
+                    Attachment att = new Attachment();
+                    att.setBoardSeq(boardSeq);
+                    att.setAttachmentSeq(rs.getLong("attachment_seq"));
+                    att.setOriginName(rs.getString("origin_name"));
+                    att.setStoredName(rs.getString("stored_name"));
+                    att.setFilePath(rs.getString("file_path"));
+                    att.setFileType(rs.getString("file_type"));
+                    att.setFileExt(rs.getString("file_ext"));
+                    att.setFileSize(rs.getLong("file_size"));
+                    att.setCreatedAt(rs.getTimestamp("created_at"));
+
+                    attList.add(att);
+                }
+            }
+        }
+        return attList;
     }
+
 
 
 
