@@ -14,7 +14,22 @@
     <script type="application/javascript">
         document.addEventListener('DOMContentLoaded', () => {
 
-            // 목록 버튼 클릭시 이전 페이지로 이동
+            goBackList();
+
+            updateBoard();
+
+            deleteBoard();
+
+            deleteComment();
+
+            insertComment();
+
+
+        }); // DOMContentLoaded End
+
+
+        // 목록 버튼 클릭시 이전 페이지로 이동
+        function goBackList(){
             document.getElementById('list-button').addEventListener('click', ()=>{
                 const url = sessionStorage.getItem("beforeUrl");
                 if(!url){
@@ -23,21 +38,74 @@
                     location.href = url;
                 }
             });
+        }
 
+        // 수정 버튼 클릭시 수정 페이지로 이동
+        function updateBoard(){
             // 수정 버튼 클릭시 수정 페이지로 이동
             document.getElementById('edit-button').addEventListener('click', ()=>{
                 location.href = "${pageContext.request.contextPath}/board/edit?seq=${board.boardSeq}";
             });
+        }
 
-            // 삭제 버튼 클릭시 확인 후 삭제
-            document.getElementById('delete-button').addEventListener('click', ()=>{
-                const isDeleted = confirm('정말 삭제하시겠습니까?');
-                if(isDeleted){
-                    location.href = "${pageContext.request.contextPath}/board/delete?seq=${board.boardSeq}";
-                }
+        // 게시물 삭제 버튼 클릭시
+        function deleteBoardBtn(){
+            document.getElementById('delete-board-button').addEventListener('click', ()=>{
+                //게시물 삭제 비밀번호 레이아웃
+
+
             });
+        }
 
-        }); // DOMContentLoaded End
+        // 게시물 삭제 비밀번호 확인 누를시
+        function deleteBoardPassword(){
+            document.getElementById('board-modal-submit-button').addEventListener('click', ()=>{
+
+                location.href = "${pageContext.request.contextPath}/board/delete?seq=${board.boardSeq}";
+            })
+        }
+
+
+        // 댓글 등록 요청
+        function insertComment(){
+            const commentBtn = document.getElementById('comment-button');
+            if(!commentBtn){
+                return;
+            }
+            commentBtn.addEventListener('click', ()=>{
+                const comment = document.getElementById('comment-textarea').value;
+                if(!comment){
+                    alert("댓글을 입력후 등록버튼을 눌러주세요.");
+                    return;
+                }
+                const writer = document.getElementById('comment-writer').value;
+                if(!writer){
+                    alert("작성자를 입력후 등록버튼을 눌러주세요.");
+                    return;
+                }
+                const password = document.getElementById('comment-password').value;
+                if(!password){
+                    alert("비밀번호 입력후 등록버튼을 눌러주세요.");
+                    return;
+                }
+
+
+                const commentForm = document.getElementById('comment-form');
+                commentForm.submit();
+            })
+        }
+
+
+        // 댓글 삭제 요청
+        function deleteComment(){
+            //댓글 삭제 누르면 해당 댓글의 dataset.commentId로 읽어옴
+            //이값을
+
+            //action="{pageContext.request.contextPath}/board/{board.boardSeq}/comment/delete/{commentSeq}"
+
+        }
+
+
 
     </script>
 </head>
@@ -52,95 +120,6 @@
         border-width: 1px;
     }
 
-    /* 섹션 - main 내부의 각 영역 */
-    main section {
-        width: 100%;
-        margin: 20px auto;
-    }
-
-    /* 테이블 전체 스타일 */
-    table {
-        width: 90%;
-        border-collapse: collapse;
-        table-layout: fixed;  /* td, th width를 고정 비율로 적용 */
-        border: black solid 1px;
-        border-spacing: 0 10px;
-    }
-
-    /* 테이블 제목 셀 (왼쪽) */
-    table th {
-        border: 1px solid black;
-        width: 20%;              /* 왼쪽 th 20% */
-        text-align: left;
-        padding: 8px;
-        vertical-align: top;     /* 상단 정렬 */
-        background-color: #f5f5f5; /* 구분을 위한 배경색 */
-    }
-
-    /* 테이블 내용 셀 (오른쪽) */
-    table td {
-        border: 1px solid black;
-        width: 80%;              /* 오른쪽 td 80% */
-        padding: 8px;
-    }
-
-    /* 게시물 내용 영역 스타일 */
-    .content-area {
-        min-height: 200px;       /* 최소 높이 설정 */
-        white-space: pre-wrap;   /* 줄바꿈 유지 */
-        word-wrap: break-word;   /* 긴 단어 자동 줄바꿈 */
-    }
-
-    /* 첨부파일 다운로드 링크 스타일 */
-    .file-link {
-        display: block;          /* 각 파일을 줄바꿈 */
-        margin: 5px 0;
-        color: #0066cc;
-        text-decoration: none;
-    }
-
-    .file-link:hover {
-        text-decoration: underline;
-    }
-
-    /* 댓글 영역 스타일 */
-    .comment-section {
-        margin-top: 30px;
-        border-top: 2px solid black;
-        padding-top: 20px;
-    }
-
-    /* 댓글 목록 */
-    .comment-list {
-        margin: 20px 0;
-    }
-
-    /* 개별 댓글 아이템 */
-    .comment-item {
-        border-bottom: 1px solid #ddd;
-        padding: 10px 0;
-    }
-
-    /* 댓글 작성자 정보 */
-    .comment-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 5px;
-        font-size: 14px;
-        color: #666;
-    }
-
-    /* 댓글 내용 */
-    .comment-content {
-        margin: 10px 0;
-        line-height: 1.5;
-    }
-
-    /* 댓글 입력 영역 */
-    .comment-input-area {
-        margin-top: 20px;
-    }
-
     .comment-input-area input {
         width: 100%;
         padding: 10px;
@@ -148,31 +127,180 @@
         border: 1px solid #ddd;
     }
 
-    /* 버튼 영역 - 하단 네비게이션 */
-    .nav-section {
-        margin-top: 10px;
-        max-width: 90%;
-        display: flex;
-        justify-content: space-between;
+    .write-button {
+        display: flex;           /* 가로로 나열 */
+        gap: 8px;                /* 입력칸과 버튼 사이 간격 */
     }
 
-    /* 왼쪽 버튼 그룹 (목록) */
-    .nav-left {
-        display: flex;
-        gap: 10px;
+    .write-button textarea {
+        flex: 9;                 /* 90% 비율 */
+        resize: vertical;        /* 세로로만 크기 조절 가능 */
+        height: 40px;            /* 버튼과 높이를 맞추기 위한 기본 높이 */
+        padding: 8px;
+        box-sizing: border-box;  /* padding 포함 너비 계산 */
+        font-size: 14px;
     }
 
-    /* 오른쪽 버튼 그룹 (수정, 삭제) */
-    .nav-right {
-        display: flex;
-        gap: 10px;
-    }
-
-    /* 버튼 공통 스타일 */
-    button {
-        padding: 8px 16px;
+    .write-button button {
+        flex: 1;                 /* 10% 비율 */
+        height: 40px;            /* textarea와 같은 높이 */
+        font-size: 14px;
         cursor: pointer;
     }
+
+    .board-password-modal {
+        display: none; /* 기본 숨김 */
+        position: fixed;
+        z-index: 1000;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.5); /* 반투명 배경 */
+    }
+    .comment-password-modal {
+        display: none; /* 기본 숨김 */
+        position: fixed;
+        z-index: 1000;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.5); /* 반투명 배경 */
+    }
+
+    .nav-section {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    #comment-form {
+        display: flex;
+        width: 100%;
+        gap: 8px;              /* textarea와 버튼 간격 */
+        flex-direction: column;
+    }
+
+    #comment-textarea {
+        flex: 9;               /* 90% */
+        resize: none;          /* 크기 조절 비활성화 */
+        height: 60px;
+        padding: 8px;
+    }
+
+    #comment-button {
+        flex: 1;               /* 10% */
+        height: 60px;
+        cursor: pointer;
+    }
+
+    .nav-section button {
+        width: 80px;
+        height: 30px;
+        cursor: pointer;
+    }
+
+
+
+    /* GPT 도와줘! * /
+
+/* 댓글 섹션 전체 */
+    .comment-section {
+        margin-top: 30px;
+        border-top: 1px solid #e5e5e5;
+        padding-top: 20px;
+        font-size: 14px;
+    }
+
+    /* 댓글 하나 */
+    .comment-list > div {
+        margin-bottom: 12px;
+    }
+
+    /* 작성자 / 날짜 */
+    .comment-writer-date {
+        display: flex;
+        gap: 8px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+
+    /* 댓글 내용 */
+    .comment-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: #f9f9f9;
+        padding: 10px 12px;
+        border-radius: 6px;
+    }
+
+    /* 댓글 텍스트 */
+    .comment-content p {
+        margin: 0;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    /* 삭제 버튼 */
+    .delete-comment-button {
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .delete-comment-button:hover {
+        color: #d00;
+    }
+
+    /* 댓글 작성 영역 */
+    .comment-write {
+        margin-top: 20px;
+    }
+
+    /* 작성자 / 비밀번호 */
+    #comment-form > div:first-child {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    #comment-writer,
+    #comment-password {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    /* textarea + 버튼 */
+    #comment-form > div:last-child {
+        display: flex;
+        gap: 8px;
+    }
+
+    #comment-textarea {
+        flex: 9;
+        resize: none;
+        height: 60px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    #comment-button {
+        flex: 1;
+        border: none;
+        background: #333;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #comment-button:hover {
+        background: #000;
+    }
+
+
 
 </style>
 <body>
@@ -184,101 +312,144 @@
 
     <!-- 게시물 정보 섹션 -->
     <section class="board-section">
-        <table>
-            <!-- 작성자 정보 행 -->
-            <tr>
-                <th>작성자</th>
-                <td>${board.username}</td>
-            </tr>
+        <!-- 작성자, 날짜 행 -->
+        <div class="writer-date" style="display: flex; justify-content: space-between;">
+            <div class="writer">
+                ${board.username}
+            </div>
+            <div class="date">
+                <span style="margin-right: 20px;">등록일시 : ${board.createdAtStr}</span>
+                <span>수정일시 :
+                    <c:choose>
+                        <c:when test="${empty board.updatedAtStr}">--</c:when>
+                        <c:otherwise>${board.updatedAtStr}</c:otherwise>
+                    </c:choose>
+                </span>
+            </div>
+        </div>
+        <br>
+        <!-- 카테고리, 제목, 조회수 행 -->
+        <div class="category-title-hit" style="display: flex; justify-content: space-between;">
+            <div class="category" style="font-size: 20px; margin-right: 20px;">
+                <c:choose>
+                    <c:when test="${board.categorySeq == 1}">[JAVA]</c:when>
+                    <c:when test="${board.categorySeq == 2}">[Javascript]</c:when>
+                    <c:when test="${board.categorySeq == 3}">[Database]</c:when>
+                    <c:otherwise>[미정]</c:otherwise>
+                </c:choose>
+                <span style="margin-right: 20px; font-size: 25px;">${board.title}</span>
+            </div>
+            <div class="hit">
+                조회수: ${board.hit}
+            </div>
+        </div>
 
-            <!-- 등록일시/수정일시 행 -->
-            <tr>
-                <th>등록일시 / 수정일시</th>
-                <td>
-                    등록일시: ${board.createdAtStr} / 수정일시: ${board.updatedAtStr}
-                    <span style="float: right;">조회수: ${board.hit}</span>
-                </td>
-            </tr>
+        <hr>
+        <!-- 내용 행-->
+        <div class="content" style="margin: 20px auto;">
+            ${board.content}
+        </div>
 
-            <!-- 카테고리 + 제목 행 -->
-            <tr>
-                <th>[${board.categorySeq}]</th>
-                <td>${board.title}</td>
-            </tr>
+        <hr>
 
-            <!-- 내용 행 -->
-            <tr>
-                <th>내용</th>
-                <td>
-                    <textarea>
-                        ${board.content}
-                    </textarea>
-                </td>
-            </tr>
+        <!-- 첨부파일 -->
+        <div class="attachment" style="margin-bottom: 30px;">
+            <c:if test="${empty attachments}">
+                <p>첨부파일이 존재하지 않습니다.</p>
+            </c:if>
+            <c:if test="${not empty attachments}">
+                <small>첨부파일 DB 난수도입 고려 중 </small><br>
+                <c:forEach var="att" items="${attachments}" >
+                    <div>
+                        <a href="${pageContext.request.contextPath}/board/${board.boardSeq}/attachment/download/${att.attachmentSeq}"> &#x1F4E5; ${att.originName}</a>
+                    </div>
+                </c:forEach>
+            </c:if>
+        </div>
 
-            <!-- 첨부파일 행 -->
-            <tr>
-                <th>첨부파일</th>
-                <td>
-                    <!-- 첨부파일이 있을 경우 반복 출력 -->
-                    <c:forEach var="file" items="${attachments}">
-                        <a href="${pageContext.request.contextPath}/download?fileSeq=${file.attachmentSeq}"
-                           class="file-link">
-                            📎 ${file.originName}
-                        </a>
-                    </c:forEach>
-
-                    <!-- 첨부파일이 없을 경우 -->
-                    <c:if test="${empty attachments}">
-                        첨부파일이 없습니다.
-                    </c:if>
-                </td>
-            </tr>
-        </table>
     </section>
 
     <!-- 댓글 섹션 -->
     <section class="comment-section">
-        <h3>댓글</h3>
-
         <!-- 댓글 목록 -->
         <div class="comment-list">
-            <!-- 댓글 샘플 1 -->
-            <div class="comment-item">
-                <div class="comment-header">
-                    <span>맛굼이 좋습니다.</span>
-                    <span>2020.03.09 16:32</span>
-                </div>
-            </div>
-
-            <!-- 댓글 샘플 2 -->
-            <div class="comment-item">
-                <div class="comment-header">
-                    <span>맛굼이 좋습니다. 맛굼이 좋습니다. 맛굼이 좋습니다...</span>
-                    <span>2018.03.09 14:23</span>
-                </div>
-            </div>
+            <c:if test="${not empty comments}">
+                <c:forEach var="comment" items="${comments}">
+                    <div class="comment-writer-date" style="gap: 10px;">
+                        <span><small>${comment.writer}</small></span>
+                        <span><small>${comment.createdAtStr}</small></span>
+                    </div>
+                    <div class="comment-content">
+                        <p>${comment.content}</p>
+                        <span><button class="delete-comment-button" data-comment-id="${comment.commentSeq}">&#9746;</button></span>
+                    </div>
+                </c:forEach>
+            </c:if>
         </div>
 
         <!-- 댓글 작성 영역 -->
-        <div class="comment-input-area">
-            <input type="text" placeholder="댓글을 입력해 주세요." id="comment-input">
-            <span><button id="comment-submit">등록</button></span>
+        <div class="comment-write" >
+            <div class="write-button" >
+                <form id="comment-form" method="post" action="${pageContext.request.contextPath}/board/${board.boardSeq}/comment/new">
+                    <div>
+                        <input type="text" name="writer" id="comment-writer" placeholder="작성자 " required>
+                        <input type="password" name="password" id="comment-password" placeholder="비밀번호" required>
+                    </div>
+                    <div>
+                        <textarea name="comment" id="comment-textarea" placeholder="댓글을 입력해 주세요." required></textarea>
+                        <button type="button" id="comment-button">등록</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </section>
 
-    <!-- 하단 버튼 네비게이션 -->
-    <div class="nav-section">
-        <!-- 왼쪽: 목록 버튼 -->
-        <div class="nav-left">
-            <button id="list-button">목록</button>
+    <!-- 하단 버튼 섹션  -->
+    <section class="nav-section">
+        <div>
+            <button type="button" id="list-button">목록</button>
         </div>
+        <div>
+            <button type="button" id="edit-button">수정</button>
+        </div>
+        <div>
+            <button type="button" id="delete-board-button">삭제</button>
+        </div>
+    </section>
 
-        <!-- 오른쪽: 수정, 삭제 버튼 -->
-        <div class="nav-right">
-            <button id="edit-button">수정</button>
-            <button id="delete-button">삭제</button>
-        </div>
+    <!-- 게시물 삭제시 비밀번호 확인 모달 -->
+    <div class="board-password-modal">
+        <form id="board-password-modal-form" method="post" action="${pageContext.request.contextPath}/board/delete/${board.boardSeq}">
+            <div>
+                <input type="hidden" value="${beforeUrl}" name="beforeUrl">
+                <input type="hidden" value="${board.boardSeq}" name="boardSeq">
+                <span style="background-color: #666666">비밀번호*</span>
+                <span><input type="password" name="password" placeholder="비밀번호를 입력해 주세요."></span>
+            </div>
+            <div>
+                <button type="button" id="board-modal-cancel-button" style="background-color: #666666">취소</button>
+                <button type="button" id="board-modal-submit-button" style="background-color: #007bff">확인</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 댓글 삭제시 비밀번호 확인 모달 -->
+    <div class="comment-password-modal">
+        <form id="comment-password-modal-form" method="post" >
+            <div>
+                <input type="hidden" value="" name="commentPassword" >
+                <span style="background-color: #666666">비밀번호*</span>
+                <span><input type="password" name="password" placeholder="비밀번호를 입력해 주세요."></span>
+            </div>
+            <div>
+                <button type="button" id="comment-modal-cancel-button" style="background-color: #666666">취소</button>
+                <button type="button" id="comment-modal-submit-button" style="background-color: #007bff">확인</button>
+            </div>
+        </form>
+    </div>
+
+    <div>
+        <input type="hidden" value="${errorMessage}" id="error-message">
     </div>
 
 </main>

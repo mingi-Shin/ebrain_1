@@ -20,6 +20,8 @@
             submitSearchForm();
             saveUrlBeforeMove();
 
+            showErrorMessage();
+
         });
 
         //검색 전에 날짜 검증하기
@@ -62,6 +64,14 @@
                     sessionStorage.setItem("beforeUrl", window.location.href);
                 })
             })
+        }
+
+        //에러 메시지 출력용
+        function showErrorMessage(){
+            const message = document.getElementById('errorMessage').value;
+            if(message){
+                alert(message);
+            }
         }
 
     </script>
@@ -306,6 +316,14 @@
     <div class="write-button">
         <button type="button" id="write-button">등록</button>
     </div>
+
+    <!-- 에러 메시지 호출 : 세션 스코프영역 -->
+    <c:if test="${not empty sessionScope.errorMessage}">
+        <div class="error">
+            <input type="hidden" value="${sessionScope.errorMessage}" id="errorMessage">
+        </div>
+        <c:remove var="errorMessage" scope="session"/>
+    </c:if>
 
 </main>
 

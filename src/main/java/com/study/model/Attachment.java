@@ -1,6 +1,7 @@
 package com.study.model;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class Attachment {
     private Long attachmentSeq;
@@ -11,10 +12,20 @@ public class Attachment {
     private Long fileSize;
     private String fileExt;
     private String fileType;
-    private Timestamp createdAt;
-    private Timestamp deletedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
+
+    private String createdAtStr;
 
     public Attachment(){};
+
+    public String getCreatedAtStr() {
+        return createdAtStr;
+    }
+
+    public void setCreatedAtStr(String createdAtStr) {
+        this.createdAtStr = createdAtStr;
+    }
 
     public Long getAttachmentSeq() {
         return attachmentSeq;
@@ -80,20 +91,37 @@ public class Attachment {
         this.fileType = fileType;
     }
 
-    public Timestamp getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Timestamp getDeletedAt() {
+    public LocalDateTime getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(Timestamp deletedAt) {
+    public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    @Override
+    public String toString() {
+        return "Attachment{" +
+                "attachmentSeq=" + attachmentSeq +
+                ", boardSeq=" + boardSeq +
+                ", originName='" + originName + '\'' +
+                ", storedName='" + storedName + '\'' +
+                ", filePath='" + filePath + '\'' +
+                ", fileSize=" + fileSize +
+                ", fileExt='" + fileExt + '\'' +
+                ", fileType='" + fileType + '\'' +
+                ", createdAt=" + createdAt +
+                ", deletedAt=" + deletedAt +
+                ", createdAtStr='" + createdAtStr + '\'' +
+                '}';
     }
 }
 

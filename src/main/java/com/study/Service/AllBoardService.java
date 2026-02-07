@@ -7,6 +7,8 @@ import com.study.dao.BoardDAO;
 import com.study.model.Attachment;
 import com.study.model.Board;
 import com.study.model.BoardComment;
+import com.study.util.FileUtil;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -62,6 +64,7 @@ public class AllBoardService {
         } finally {
             if(conn != null){
                 try {
+                    conn.setAutoCommit(true); // 복원
                     conn.close(); // SQLException 발생 가능
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -149,7 +152,12 @@ public class AllBoardService {
      * Board, Attachment, BoardComment 테이블 soft delete 작업 처리 : update
      * @param boardSeq
      */
-    public void deleteBoardAttachment(Long boardSeq){
+    public void deleteBoard(Long boardSeq) throws Exception {
+
+        BoardDAO bDao = BoardDAO.getInstance();
+
+        bDao.deleteBoard(boardSeq);
+
 
     }
 
@@ -176,12 +184,18 @@ public class AllBoardService {
             AttachmentDAO aDao = AttachmentDAO.getInstance();
             BoardCommentDAO bcDao = BoardCommentDAO.getInstance();
 
+            //조회수 증가
+            bDao.updateBoardHit(boardSeq);
+            //게시물 데이터
             Board board = bDao.selectBoard(boardSeq, conn);
-            log.info(board.toString());
+
+            if("DELETED".equals(board.getStatus())){
+                throw new IllegalStateException("삭제된 게시물입니다.");
+            }
+            //첨부파일 데이터
             List<Attachment> attList = aDao.selectAttList(boardSeq, conn);
-            log.info(attList.toString());
+            //댓글 데이터
             List<BoardComment> commentList = bcDao.selectCommentList(boardSeq, conn);
-            log.info(commentList.toString());
 
             boardDetailMap.put("board", board);
             boardDetailMap.put("attList", attList);
@@ -196,15 +210,54 @@ public class AllBoardService {
     }
 
     /**
-     * 댓글 작성 메서드
+     * 댓글 등록 서비스 -> 원자성 보장
      * @param boardSeq
-     * @param comment
+     * @param writer
+     * @param password
+     * @param content
      */
-    public void insertCommentOnActiveBoard(Long boardSeq, BoardComment comment){
-        //BoardDAO.getInstance()의 selectBoardLock() 사용
-        //해당 게시물 조회 결과 true -> 댓글 insert
+    public void insertCommentOnActiveBoard(Long boardSeq, String writer, String password, String content){
+        // 만약 등록 시점에 게시물을 삭제해버리면, "삭제된 게시물에는 댓글을 등록하실수 없습니다" 라고 안내해야돼.
+        // 어떻게?
 
-        //해당 게시물 조회 결과 false(논리삭제) -> 댓글 insert 실패
+        Connection conn = null;
+
+        try {
+            conn = ConnectionTest.getConnection();
+            conn.setAutoCommit(false);
+
+            //트랜잭션 처리 : 게시물 존재 여부 확인
+            BoardDAO boardDAO = BoardDAO.getInstance();
+            boardDAO.validateBoardActive(boardSeq, conn);
+
+            BoardCommentDAO bcDao = BoardCommentDAO.getInstance();
+            bcDao.insertComment(boardSeq, writer, password, content, conn);
+
+            conn.commit();
+
+            //이 예외를 컨트롤러에서 catch -> 사용자 메시지로 변환 ->redirect
+        } catch (Exception e) {
+            if(conn != null){
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    log.info("댓글 등록 중 오류 발생 : " + e.getMessage());
+                    throw new RuntimeException(ex);
+                }
+            }
+            throw new RuntimeException(e);
+        } finally {
+            if(conn != null){
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
+
+
 
 }

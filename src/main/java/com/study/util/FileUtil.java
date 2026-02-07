@@ -13,16 +13,16 @@ import java.util.*;
 import java.util.logging.Logger;
 
 // 파일을 저장하고 삭제하는 메서드 클래스
-public class UploadFileUtil {
+public class FileUtil {
 
-    private static final Logger log = Logger.getLogger(UploadFileUtil.class.getName());
+    private static final Logger log = Logger.getLogger(FileUtil.class.getName());
 
-    //저장 위치
+    //업로드 위치
     public static final String MAC_SAVE_PATH = "/Users/smk/IT_DATAS/ebrain_temp";
-    private static final String WIN_SAVE_PATH = "";
+    //private static final String WIN_SAVE_PATH = "";
 
-    //파일 저장 메서드
-    public static List<Attachment> saveFile(Collection<Part> files){
+    //파일 업로드 메서드
+    public static List<Attachment> uploadFile(Collection<Part> files){
 
         //첨부파일 없음, 파일저장 로직 불필요
         if(files.isEmpty()){
@@ -46,7 +46,6 @@ public class UploadFileUtil {
             //물리저장용 파일이름 설정 (ex. randomUUID.jpg)
             String ext = file.getSubmittedFileName().substring(file.getSubmittedFileName().lastIndexOf("."));
             String uuidName = UUID.randomUUID().toString().replace("-","") + ext;
-            //log.info("uuidName : " + uuidName);
 
             att.setOriginName(file.getSubmittedFileName());
             att.setStoredName(uuidName);
@@ -60,7 +59,7 @@ public class UploadFileUtil {
 
             attachList.add(att);
 
-            //실제 파일 저장
+            //실제 파일 업로드
             String realPath = rootDir + File.separator + subFilePath;
             String filePath = realPath + File.separator + uuidName;
 
@@ -82,6 +81,9 @@ public class UploadFileUtil {
 
         return attachList;
     }
+
+
+
 
     //파일 삭제 메서드
 

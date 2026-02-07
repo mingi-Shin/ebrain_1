@@ -1,6 +1,7 @@
 package com.study.model;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class BoardComment {
     private Long commentSeq;
@@ -9,8 +10,10 @@ public class BoardComment {
     private String password;
     private String content;
     private String status;
-    private Timestamp createdAt;
-    private Timestamp deletedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
+
+    private String createdAtStr;
 
     public BoardComment(){};
 
@@ -62,19 +65,42 @@ public class BoardComment {
         this.status = status;
     }
 
-    public Timestamp getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public Timestamp getDeletedAt() {
+    public LocalDateTime getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(Timestamp deletedAt) {
+    public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    public String getCreatedAtStr() {
+        return createdAtStr;
+    }
+
+    public void setCreatedAtStr(String createdAtStr) {
+        this.createdAtStr = createdAtStr;
+    }
+
+    @Override
+    public String toString() {
+        return "BoardComment{" +
+                "commentSeq=" + commentSeq +
+                ", boardSeq=" + boardSeq +
+                ", writer='" + writer + '\'' +
+                ", password='" + password + '\'' +
+                ", content='" + content + '\'' +
+                ", status='" + status + '\'' +
+                ", createdAt=" + createdAt +
+                ", deletedAt=" + deletedAt +
+                ", createdAtStr='" + createdAtStr + '\'' +
+                '}';
     }
 }

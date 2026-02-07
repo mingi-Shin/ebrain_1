@@ -1,12 +1,12 @@
 package com.study.controller;
 
 import com.study.Service.AllBoardService;
-import com.study.dao.BoardDAO;
+import com.study.dao.AttachmentDAO;
 import com.study.model.Attachment;
 import com.study.model.Board;
 import com.study.model.BoardComment;
 import com.study.util.BoardFormValidator;
-import com.study.util.UploadFileUtil;
+import com.study.util.FileUtil;
 import com.study.util.ValidationResult;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -16,9 +16,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
+import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +25,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static com.study.util.FileUtil.MAC_SAVE_PATH;
 
 @WebServlet("/board/*")
 @MultipartConfig //용량제한 옵션주면 서블릿에 도달전에 톰캣에서 검증 -> IllegalStateException (500)
@@ -167,17 +168,35 @@ public class BoardController extends HttpServlet {
                 AllBoardService service = new AllBoardService();
                 Map<String, Object> boardDetailMap = service.selectBoardAttachmentComment(boardSeq);
 
-                // EL표현을 위해 board의 날짜 String 형에 초기화
-                Board board = (Board) boardDetailMap.get("board");
+                //EL 표현을 위해 board의 날짜 String 형에 초기화
                 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                Board board = (Board) boardDetailMap.get("board");
                 board.setCreatedAtStr(board.getCreatedAt().format(dtf));
                 if(board.getUpdatedAt() != null){
                     board.setUpdatedAtStr(board.getUpdatedAt().format(dtf));
                 }
+                //Attachment 날짜 변환 추가
+                List<Attachment> attList = (List<Attachment>) boardDetailMap.get("attList");
+                if(attList != null){
+                    for(Attachment att : attList){
+                        att.setCreatedAtStr(att.getCreatedAt().format(dtf));
+                    }
+                }
+                //EL 표현을 위해 comment의 날짜 String 형에 초기화
+                List<BoardComment> commList = (List<BoardComment>) boardDetailMap.get("commentList");
+                if(commList != null){
+                    for(BoardComment comm : commList){
+                        comm.setCreatedAtStr(comm.getCreatedAt().format(dtf));
+                    }
+                }
 
-                req.setAttribute("board", boardDetailMap.get("board"));
-                req.setAttribute("attachments", boardDetailMap.get("attList"));
-                req.setAttribute("comments", boardDetailMap.get("commentList"));
+                log.info(board.toString());
+                log.info(attList.toString());
+                log.info(Objects.requireNonNull(commList).toString());
+
+                req.setAttribute("board", board);
+                req.setAttribute("attachments", attList);
+                req.setAttribute("comments", commList);
 
                 req.getRequestDispatcher("/WEB-INF/views/board/detail.jsp").forward(req, res);
 
@@ -186,6 +205,120 @@ public class BoardController extends HttpServlet {
                 log.severe("게시물 조회 오류: " + e.getMessage());
                 res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); //500
             }
+        }
+
+
+        // 파일 다운로드 처리
+        // URL 패턴: /board/${boardSeq}/attachment/download/${attachmentSeq}
+        String pathInfo = req.getPathInfo();
+        log.info("pathInfo : " + pathInfo); // 예: /52/attachment/download/6
+
+        // pathInfo가 null인 경우 에러 처리
+        if (pathInfo == null) {
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST); // 400 (500보다 적절)
+            return;
+        }
+
+        // URL 경로를 '/'로 분리 (예: ["", "52", "attachment", "download", "6"])
+        String[] parts = pathInfo.split("/");
+
+        // URL 패턴 검증: 5개 부분 + "attachment" + "download" 확인
+        if (parts.length == 5 && "attachment".equals(parts[2]) && "download".equals(parts[3])) {
+
+            // attachmentSeq 추출 (parts[4])
+            Long attachmentSeq = Long.valueOf(parts[4]);
+            log.info("다운로드 시도, attachmentSeq : " + attachmentSeq);
+
+            // 1. DB에서 첨부파일 정보 조회
+            AttachmentDAO aDao = AttachmentDAO.getInstance();
+            Attachment att = null;
+            try {
+                att = aDao.selectAttachment(attachmentSeq);
+
+                // 🔧 수정1: DB에서 데이터를 못 찾은 경우 처리
+                if (att == null) {
+                    log.info("첨부파일을 찾을 수 없음: attachmentSeq=" + attachmentSeq);
+                    res.sendError(HttpServletResponse.SC_NOT_FOUND); // 404
+                    return;
+                }
+
+                log.info("조회된 첨부파일 정보: " + att.toString());
+
+            } catch (Exception e) {
+                log.severe("첨부파일 조회 중 오류: " + e.getMessage());
+                e.printStackTrace();
+                res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500
+                return; // 🔧 수정2: return 추가 (중요!)
+            }
+
+            // 2. 실제 파일 경로 구성
+            // 최종 경로: /Users/smk/IT_DATAS/ebrain_temp/2026/02/06/uuid.png
+            String realPath = MAC_SAVE_PATH + File.separator +
+                    att.getFilePath() + File.separator +
+                    att.getStoredName();
+
+            log.info("파일 실제 경로: " + realPath); // 🔧 수정3: 경로 로그 추가
+
+            // 3. 파일 존재 여부 확인
+            File file = new File(realPath);
+            if (!file.exists()) {
+                log.severe("파일이 디스크에 없음: " + realPath);
+                res.sendError(HttpServletResponse.SC_NOT_FOUND); // 404
+                return;
+            }
+
+            // 🔧 수정4: 파일 읽기 권한 확인
+            if (!file.canRead()) {
+                log.severe("파일 읽기 권한 없음: " + realPath);
+                res.sendError(HttpServletResponse.SC_FORBIDDEN); // 403
+                return;
+            }
+
+            // 4. 응답 헤더 설정 ⭐ 핵심
+            // MIME 타입을 "다운로드 가능한 바이너리"로 설정
+            res.setContentType("application/octet-stream");
+
+            // 파일 크기 명시 (브라우저가 다운로드 진행률 표시 가능)
+            res.setContentLengthLong(file.length());
+
+            // 한글 파일명 깨짐 방지 (UTF-8 인코딩 + 공백 처리)
+            String encodedName = URLEncoder.encode(att.getOriginName(), "UTF-8")
+                    .replaceAll("\\+", "%20"); // 공백을 %20으로 변환
+
+            // Content-Disposition: 브라우저에게 "다운로드 저장창 띄워!"라고 알림
+            res.setHeader(
+                    "Content-Disposition",
+                    "attachment; filename=\"" + encodedName + "\""
+            );
+
+            log.info("다운로드 시작: " + att.getOriginName() + " (" + file.length() + " bytes)");
+
+            // 5. 파일 내용을 바이너리로 전송
+            // try-with-resources: 자동으로 스트림 닫기
+            try (InputStream fis = new FileInputStream(file);
+                 OutputStream os = res.getOutputStream()) {
+
+                // 8KB 단위로 읽어서 전송 (메모리 효율)
+                byte[] buffer = new byte[8192];
+                int read; // 실제로 읽은 바이트 수
+
+                long totalWritten = 0; // 🔧 수정5: 전송량 추적
+
+                while ((read = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, read); // 읽은 만큼만 쓰기
+                    totalWritten += read;
+                }
+
+                os.flush(); // 🔧 수정6: 버퍼 비우기
+                log.info("다운로드 완료: " + totalWritten + " bytes 전송");
+
+            } catch (IOException e) {
+                // 🔧 수정7: 다운로드 중 네트워크 오류 처리
+                log.severe("파일 전송 중 오류: " + e.getMessage());
+                // 이미 응답이 시작되었으므로 sendError() 불가
+                // 로그만 남기고 클라이언트에서 재시도하도록 유도
+            }
+
         }
 
     }
@@ -246,7 +379,7 @@ public class BoardController extends HttpServlet {
             //1. 첨부파일을 하드에 저장 및 객체 리스트화
             List<Attachment> attList = null;
             try {
-                attList = UploadFileUtil.saveFile(files);
+                attList = FileUtil.uploadFile(files);
             } catch (UncheckedIOException e){
                 log.severe(e.getMessage());
 
@@ -266,7 +399,7 @@ public class BoardController extends HttpServlet {
                 //log.info("----------- DB작업 실패, rollback 처리. 저장된 사진 삭제를 시도합니다. -----------");
                 for(Attachment att : attList){
                     // 절대 경로 조합
-                    String fullPath = UploadFileUtil.MAC_SAVE_PATH
+                    String fullPath = MAC_SAVE_PATH
                             + File.separator + att.getFilePath()
                             + File.separator + att.getStoredName();
                     File file = new File(fullPath);
@@ -285,6 +418,80 @@ public class BoardController extends HttpServlet {
             res.sendRedirect(url);
 
         }
+
+
+
+        //댓글 등록 요청
+        //action="${pageContext.request.contextPath}/board/${board.boardSeq}/comment/new"
+        String pathInfo = req.getPathInfo();
+        if (pathInfo == null) return;
+        if (pathInfo.endsWith("/comment/new")) {
+            String[] arr = pathInfo.split("/");
+            Long boardSeq = Long.parseLong(arr[1]);
+
+            // 댓글 등록 로직시작
+            // NPE 방지 기존값 설정
+            String comment = req.getParameter("comment");
+            if(comment == null || comment.isBlank()){
+                comment = "행복하세요!";
+            }
+            String writer = req.getParameter("writer");
+            if(writer == null || writer.isBlank()){
+                writer = "[GUEST]";
+            }
+            String password = req.getParameter("password");
+            if(password == null || password.isBlank()){
+                password = "0000";
+            }
+
+            try {
+                AllBoardService allService = new AllBoardService();
+                allService.insertCommentOnActiveBoard(boardSeq, writer, password, comment);
+
+                // 성공시
+                String redirectUrl = req.getContextPath() + "/board/detail/" + boardSeq;
+            } catch (Exception e) {
+                log.info("댓글 등록 중 오류 발생 : " + e.getMessage());
+
+                //실패메시지 담아서 게시물 리스트페이지로
+                req.getSession().setAttribute("errorMessage", e.getMessage());
+                String redirectUrl = req.getContextPath() + "/board/list";
+                res.sendRedirect(redirectUrl);
+            }
+
+            // 성공시 해당 게시물로
+            String redirectUrl = req.getContextPath() + "/board/detail?boardSeq=" + boardSeq;
+            res.sendRedirect(redirectUrl);
+        }
+
+
+
+        //게시물 삭제
+        //action="${pageContext.request.contextPath}/board  /delete/${board.boardSeq}">
+        String[] parts = reqPathInfo.split("/");
+        if(parts.length == 3 && "delete".equals(parts[1])){
+
+            Long boardSeq = Long.valueOf(req.getParameter("boardSeq"));
+            String password = req.getParameter("password");
+
+            //게시물 status를 'DELETED'로 업데이트
+            AllBoardService abService = new AllBoardService();
+            try {
+                abService.deleteBoard(boardSeq);
+            } catch (Exception e) {
+                // 다음엔 에러페이지 분류별로 만들자
+                req.getSession().setAttribute("errorMessage", e.getMessage());
+                String redirectUrl = req.getContextPath() + "/board/list";
+                res.sendRedirect(redirectUrl);
+            }
+
+
+
+
+        }
+
+
+        //댓글 삭제
 
 
     }

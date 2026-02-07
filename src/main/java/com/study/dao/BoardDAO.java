@@ -55,6 +55,22 @@ public class BoardDAO {
         }
     }
 
+    public void updateBoardHit(Long boardSeq) throws Exception {
+
+        String sql = " UPDATE board SET hit = hit+1 WHERE board_seq = ? ";
+
+        try(Connection conn = ConnectionTest.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+        ){
+            pstmt.setLong(1, boardSeq);
+
+            int result = pstmt.executeUpdate();
+            if(result == 0){
+                throw new SQLException("조회수 증가 실패 ");
+            }
+        }
+    }
+
     /**
      * 게시물 수정 메서드
      * @param board
@@ -69,8 +85,21 @@ public class BoardDAO {
      * 게시물 논리적 삭제 메서드
      * @param boardSeq
      */
-    public void deleteBoard(Long boardSeq, Connection conn){
+    public void deleteBoard(Long boardSeq) throws Exception {
 
+        String sql = "UPDATE board SET status = 'DELETED' WHERE board_seq = ? ";
+
+        try(Connection conn = ConnectionTest.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+        ){
+            pstmt.setLong(1, boardSeq);
+
+            int result = pstmt.executeUpdate();
+
+            if(result == 0 ){
+                throw new SQLException("게시물 논리삭제중 오류 발생");
+            }
+        }
     }
 
     /**
@@ -95,6 +124,7 @@ public class BoardDAO {
                     board.setContent(rs.getString("content"));
                     board.setUsername(rs.getString("username"));
                     board.setPassword(rs.getString("password"));
+                    board.setStatus(rs.getString("status"));
                     board.setHit(rs.getInt("hit"));
                     board.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                     //updatedAt은 NPE 가능성 존재, toLocalDateTime()은 NPE발생시킴
@@ -112,19 +142,30 @@ public class BoardDAO {
     }
 
     /**
-     * 게시물 상세 조회 메서드 (동시성 제어 비관적 잠금처리 -> 댓글작성때 호출 필요)
+     *  게시물 존재 및 ACTIVE 상태 검증 메서드
      * @param boardSeq
      * @return
      */
-    public Board selectBoardLock(Long boardSeq){
+    public void validateBoardActive(Long boardSeq, Connection conn) throws Exception {
 
-        //... for update 사용하여 비관적 락 실행
+        String lockSql = "SELECT status FROM board WHERE board_seq = ? ";
 
-        return null;
+        try(PreparedStatement pstmt = conn.prepareStatement(lockSql);){
+            pstmt.setLong(1, boardSeq);
+
+            try(ResultSet rs = pstmt.executeQuery()){
+                if(!rs.next()){
+                    throw new Exception("게시물이 존재하지 않습니다.");
+                }
+                if("DELETED".equals(rs.getString("status"))){
+                    throw new IllegalStateException("이미 삭제된 게시물입니다.");
+                }
+            }
+        }
     }
 
     /**
-     * 게시물 리스트 조회 메서드 (조건은 동적으로)
+     * 게시물 리스트 조회 메서드
      * @return
      */
     public List<Board> selectBoardList(Long categorySeq, String searchWord, LocalDateTime startDate, LocalDateTime endDate,

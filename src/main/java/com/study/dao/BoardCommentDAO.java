@@ -22,14 +22,30 @@ public class BoardCommentDAO {
 
     /**
      * 게시물 댓글 작성 메서드
-     * @param comment 댓글 객체
-     * @param conn 동시성 제어, 같은 conn공유
+     * @param boardSeq
+     * @param writer
+     * @param password
+     * @param content
+     * @param conn
+     * @throws SQLException
      */
-    public void insertComment(BoardComment comment, Connection conn){
+    public void insertComment(Long boardSeq, String writer, String password, String content, Connection conn) throws SQLException {
 
-        //정합성 생각. 게시물이 삭제될경우(논리 삭제) -> "삭제된 게시물에는 댓글을 작성하실수 없습니다" 표시하기위함
+        String insertSql = "INSERT INTO board_comment (board_seq, writer, password, content) VALUES (?, ?, ?, ?) ";
 
+        try(PreparedStatement pstmt = conn.prepareStatement(insertSql);) {
 
+            pstmt.setLong(1, boardSeq);
+            pstmt.setString(2, writer);
+            pstmt.setString(3, password);
+            pstmt.setString(4, content);
+
+            int result = pstmt.executeUpdate();
+
+            if (result == 0) {
+                throw new SQLException("게시물 등록 실패");
+            }
+        }
     }
 
 
@@ -63,7 +79,7 @@ public class BoardCommentDAO {
 
         List<BoardComment> commentList = new ArrayList<>();
 
-        String sql = "SELECT * FROM board_comment WHERE board_seq = ? AND status = 'ACTIVE' ";
+        String sql = "SELECT * FROM board_comment WHERE board_seq = ? AND status = 'ACTIVE' ORDER BY created_at ASC ";
 
         try(PreparedStatement pstmt = conn.prepareStatement(sql);){
 
@@ -78,7 +94,7 @@ public class BoardCommentDAO {
                     comment.setWriter(rs.getString("writer"));
                     comment.setContent(rs.getString("content"));
                     comment.setPassword(rs.getString("password"));
-                    comment.setCreatedAt(rs.getTimestamp("created_at"));
+                    comment.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                     comment.setStatus(rs.getString("status"));
 
                     commentList.add(comment);
@@ -90,4 +106,5 @@ public class BoardCommentDAO {
 
 
 }
+
 

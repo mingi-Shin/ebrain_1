@@ -44,7 +44,13 @@
             document.getElementById('cancel-button').addEventListener('click', ()=>{
                 const isCanceled = confirm('게시물 작성을 취소하시겠습니까?');
                 if(isCanceled){
-                    let url = sessionStorage.getItem("beforeUrl");
+                    let url;
+                    let beforeUrl = sessionStorage.getItem("beforeUrl");
+                    if(!beforeUrl){
+                        url = "/";
+                    } else {
+                        url = beforeUrl;
+                    }
                     location.href=url;
                 }
             })

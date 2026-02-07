@@ -1,5 +1,6 @@
 package com.study.dao;
 
+import com.study.connection.ConnectionTest;
 import com.study.model.Attachment;
 
 import java.sql.Connection;
@@ -93,13 +94,43 @@ public class AttachmentDAO {
                     att.setFileType(rs.getString("file_type"));
                     att.setFileExt(rs.getString("file_ext"));
                     att.setFileSize(rs.getLong("file_size"));
-                    att.setCreatedAt(rs.getTimestamp("created_at"));
+                    att.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
 
                     attList.add(att);
                 }
             }
         }
         return attList;
+    }
+
+    //파일 조회
+    public Attachment selectAttachment(Long attachmentSeq) throws Exception {
+        Attachment att = new Attachment();
+
+        String sql = "SELECT * FROM attachment WHERE attachment_seq = ? ";
+
+        try(Connection conn = ConnectionTest.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+        ){
+            pstmt.setLong(1, attachmentSeq);
+
+            try(ResultSet rs = pstmt.executeQuery();){
+                while(rs.next()){
+
+                    att.setAttachmentSeq(rs.getLong("attachment_seq"));
+                    att.setOriginName(rs.getString("origin_name"));
+                    att.setStoredName(rs.getString("stored_name"));
+                    att.setFilePath(rs.getString("file_path"));
+                    att.setFileType(rs.getString("file_type"));
+                    att.setFileExt(rs.getString("file_ext"));
+                    att.setFileSize(rs.getLong("file_size"));
+                    att.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+
+                }
+            }
+        }
+
+        return att;
     }
 
 
